@@ -55,7 +55,8 @@
     "build:js": "tsc -p tsconfig.build.json",
     "build:native": "./build.sh --native",
     "cli": "node src/cli.ts",
-    "test": "node test/simple.ts",
+    "test": "node test/simple.ts && node test/cli.ts",
+    "test:cli": "node test/cli.ts",
     "typecheck": "tsc"
   },
   "devDependencies": {

@@ -235,17 +235,33 @@ Decisions confirmed while writing this plan:
       in both flag forms, extract copy-back (present, absent, missing directory), a set->extract
       chain, plus the documented `--version` deviation.
 
-## Phase 5 — Tests (TODO 5)
+## Phase 5 — Tests (TODO 5) ✅ (2026-10-18)
 
-- [ ] Fixtures next to `test/fixtures/lenna.jxl` (generated with `cjxl`, kept small): a container
-      variant with Exif/XMP boxes, one with alpha, one animated; document how they were made.
-- [ ] `test/simple.ts`: module loads, `--info` matches the native binary, `--set-orientation` 90/270
-      plus undo, `--crop`, container remux, `--strip`, `--jxlp merge` — each **byte-identical** to
-      `build/native/jxltran`; pixel round trip decoded with `djxl` and compared as PPM.
-- [ ] `test/cli.ts`: run `node dist/cli.js` and the native binary with the same arguments, compare
-      stdout, stderr and exit codes, including `-h`.
-- [ ] Skip logic when `djxl` or the native binary is missing, mirroring the `has()` helper from
-      jpegtran-js; `pnpm run build:native` prepares the reference.
+- [x] Fixtures next to `test/fixtures/lenna.jxl` (generated with `cjxl`, kept small): a container
+      variant with Exif/XMP boxes (`lenna-container.jxl`), one with alpha (`lenna-alpha.jxl`,
+      256x256 with a 50 percent alpha channel), one animated (`anim-rgb.jxl`, three 64x64 frames,
+      77 bytes) and a container whose codestream is split over two jxlp boxes
+      (`lenna-jxlp.jxl`, produced by the committed `mkjxlp.mjs` - `--jxlp` has no split mode, only
+      keep/sort/merge). `test/fixtures/README.md` documents the exact creation commands and the
+      payloads; `lenna.jxl` itself is the Lenna test image from Wikipedia (CC BY-SA 4.0).
+- [x] `test/simple.ts`: module loads, `--info` matches the native binary (byte-identical stdout for
+      all five fixtures), `--set-orientation` 90/270 plus undo, `--crop`, container remux,
+      `--strip`, `--jxlp merge`, orientation on the alpha and the animated fixture - each
+      **byte-identical** to `build/native/jxltran` (file bytes, stdout, stderr, exit status);
+      pixel round trip decoded with `djxl` and compared as PPM. 65 checks.
+      The pixel section asserts: orientation round trip and container decode are byte-identical to
+      the original PPM, and the 90 degree file decodes as the original rotated 90 degrees clockwise
+      - djxl applies the EXIF orientation, with up to one unit of rounding per channel coming from
+      djxl's colour pipeline (measured, deterministic, therefore a tolerance of exactly 1).
+- [x] `test/cli.ts`: runs `node dist/cli.js` and the native binary with the same arguments in a
+      recreated scratch directory (`test/out/cli/`), compares stdout, stderr, exit codes **and every
+      produced file** byte for byte (argv[0] normalised), including `-h`; `--version` is the
+      documented extension and is checked against the CLI alone with a version-agnostic pattern.
+      32 cases - the Phase 4 differential battery as a committed test.
+- [x] Skip logic when `djxl` or the native binary is missing, mirroring the `has()` helper from
+      jpegtran-js; `pnpm run build:native` prepares the reference. Both test files print a `skip:`
+      line and exit 0 instead of failing (also when `dist/cli.js` is not built).
+      `pnpm test` runs `test/simple.ts && test/cli.ts`.
 
 ## Phase 6 — Docs and packaging
 
