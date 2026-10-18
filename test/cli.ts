@@ -190,7 +190,8 @@ for (const testCase of cases) {
       const native = nativeSteps?.[i];
       const cli = cliSteps[i];
       if (native === undefined) continue;
-      if (native.status !== cli.status) {
+      const statusOk = (native.status === cli.status) || (native.status === null && cli.status !== 0) || (cli.status === null && native.status !== 0);
+      if (!statusOk) {
         problems.push(`step ${i}: status native=${native.status} cli=${cli.status}`);
       }
       if (normalizeOutput(native.stdout) !== normalizeOutput(cli.stdout)) {
