@@ -1,0 +1,17 @@
+# Output of the tests.
+test/out/
+
+# Dependencies, only needed for `pnpm run typecheck`.
+node_modules/
+
+# The upstream jxltran sources: cloned at a pinned commit and patched by build.sh, never committed.
+third_party/
+
+# Build output that is not published: the native reference binary (build/native) and anything else
+# the build produces.
+build/
+
+# Everything the build produces: the WebAssembly artifacts from build.sh plus the JavaScript and
+# declarations from tsc (`dist/index.js`, `dist/index.d.ts`, `dist/cli.js`). It is built before
+# publishing, never committed; `files` in package.json keeps `dist/cli.d.ts` out of the tarball.
+dist/

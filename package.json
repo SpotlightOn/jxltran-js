@@ -1,0 +1,72 @@
+{
+  "name": "@chimok/jxltran-js",
+  "version": "0.9.0",
+  "description": "Lossless JPEG XL transformations (container remux, orientation, crop, metadata edits) as a WebAssembly module, built from libjxl's jxltran.",
+  "license": "BSD-3-Clause",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "jxltran-js": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "!dist/cli.d.ts",
+    "src/jxltran_wrapper.cc",
+    "build.sh",
+    "patches",
+    "LICENSE",
+    "README.md",
+    "docs"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SpotlightOn/jxltran-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SpotlightOn/jxltran-js/issues"
+  },
+  "homepage": "https://github.com/SpotlightOn/jxltran-js#readme",
+  "keywords": [
+    "jpeg-xl",
+    "jxl",
+    "jxltran",
+    "libjxl",
+    "lossless",
+    "transform",
+    "remux",
+    "container",
+    "orientation",
+    "crop",
+    "metadata",
+    "wasm",
+    "webassembly",
+    "image-transformation"
+  ],
+  "scripts": {
+    "build": "./build.sh && pnpm run build:js",
+    "build:js": "tsc -p tsconfig.build.json",
+    "build:native": "./build.sh --native",
+    "cli": "node src/cli.ts",
+    "test": "node test/simple.ts",
+    "typecheck": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=22.6"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  }
+}
