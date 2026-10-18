@@ -160,17 +160,41 @@ Decisions confirmed while writing this plan:
       `--brob=decompress` reproduces the original container, every step equal to native). A second
       `./build.sh` run reuses sources, patches and brotli objects.
 
-## Phase 3 — TypeScript API (TODO 3)
+## Phase 3 — TypeScript API (TODO 3) ✅ (2026-10-18)
 
-- [ ] `src/index.ts`:
-  - hand-written `JxlTranModule` type (the wasm ships without declarations),
-  - `export async function createJxlTran(): Promise<JxlTranTransformer>`,
-  - `JxlTranTransformer` with `info(input)`, `transform(input, options)`, `version()`,
+- [x] `src/index.ts`:
+  - hand-written `JxlTranModule` type (the wasm ships without declarations) plus
+      `JxlTranFileSystem`; `@ts-ignore` on the `../dist/jxltran.mjs` import, as in jpegtran-js,
+  - `export async function createJxlTran(): Promise<JxlTranTransformer>`; the factory installs the
+      `print`/`printErr` handlers that capture stdout and stderr per call (the capture arrays are
+      owned by the transformer),
+  - `JxlTranTransformer` with `info(input)` - parses `dimensions`, `exif_orientation`, `animation`,
+      `has_alpha_channel` and every `frame_region:` line into `ImageInfo` (`width`, `height`,
+      `orientation`, `animation`, `alpha`, `frames[]`, raw `text`) - `transform(input, options)`
+      and `version()`,
   - convenience methods `setOrientation()`, `crop()`, `strip()`, `container()`, `jxlp()`,
-  - constants (`CONTAINER`, `JXLP`, `STRIP`, `ORIENTATION`) and `TransformError`,
-  - one `toArgv(options)` mapping plus `extraArgs: string[]`,
-  - memory handling: `_malloc`, copy in, read out, `mv_free`.
-- [ ] Keep naming, error style and result shapes consistent with `../jpegtran-js/src/index.ts`.
+  - **`run(args, input)` - the raw layer**, added for Phase 4: runs a complete command line
+      (`--info`, `--help`, `--extract-*`, everything) and returns
+      `{ status, data, undo, stdout, stderr }`, so the CLI can forward flags verbatim without
+      duplicating the heap marshalling,
+  - `fs` getter: flags that name a file (`--set-exif`, `--extract-*`, `--append-jxl`) resolve
+      against the module's MEMFS - `mkdirTree`/`writeFile` before a run, `readFile` after,
+  - constants (`CONTAINER`, `JXLP`, `STRIP`, `ORIENTATION`) and `TransformError` (message = first
+      stderr line, plus `status` and the full `stderr`; jpegtran's `msgCode` has no equivalent
+      here, the tool prints plain text),
+  - one private `toArgv(options)` mapping plus `extraArgs: string[]`,
+  - memory handling: `_malloc`, copy in, read the three output slots after the call with fresh
+      `HEAPU8`/`HEAPU32` reads (the heap may have grown), `mv_free`.
+- [x] Naming, error style and result shapes follow `../jpegtran-js/src/index.ts`, with two
+      deliberate differences: `TransformResult` is `{ data, undo }` instead of
+      `{ data, width, height }` (jxltran reports dimensions through `info()`, and the
+      `reversible_undo` line is its own feature), and in-memory runs use the placeholders
+      `jxltran-js` / `INPUT.jxl` / `OUTPUT.jxl` in argv, because nothing is written to disk.
+- Verification: `pnpm typecheck` green; `node test/simple.ts` 15/15; a differential check against
+      `build/native/jxltran` with 16/16 (`--info` stdout byte-identical, `setOrientation`, `crop`
+      and `container` outputs byte-identical, undo placeholders as documented, tool-side validation
+      errors surfacing as `TransformError`); `pnpm build:js` emits `dist/index.js` +
+      `dist/index.d.ts`, and the compiled file loads the wasm on its own.
 
 ## Phase 4 — CLI (TODO 4)
 
