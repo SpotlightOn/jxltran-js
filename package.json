@@ -1,6 +1,6 @@
 {
   "name": "@chimok/jxltran-js",
-  "version": "0.9.0",
+  "version": "0.1.0",
   "description": "Lossless JPEG XL transformations (container remux, orientation, crop, metadata edits) as a WebAssembly module, built from libjxl's jxltran.",
   "license": "BSD-3-Clause",
   "type": "module",

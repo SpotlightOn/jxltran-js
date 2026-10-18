@@ -26,6 +26,8 @@ code the native binary runs, so parsing, defaults and error messages match by co
 **I will maintain and update this package, so don't worry because it's new. I use it for my app
 [meshviewer](https://github.com/SpotlightOn/meshviewer).**
 
+> **Note:** This code is still young and mostly untested in the wild. Feedback is welcome.
+
 ## Installation
 
 ```sh
@@ -133,7 +135,7 @@ jxltran-js photo.jxl --strip=all
 
 `-h`/`--help` prints the upstream help text. The one documented deviation from the native binary
 is `--version`, which upstream does not have; it prints the package version plus the embedded
-jxltran revision, e.g. `jxltran-js 0.9.0 (jxltran ec2f8c2)`.
+jxltran revision, e.g. `jxltran-js 0.1.0 (jxltran ec2f8c2)`.
 
 ## Test
 
