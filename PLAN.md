@@ -198,17 +198,42 @@ Decisions confirmed while writing this plan:
 
 ## Phase 4 — CLI (TODO 4)
 
-- [ ] `src/cli.ts` -> `dist/cli.js`, exposed as `jxltran-js`.
-- [ ] Signature of the upstream tool: `jxltran-js INPUT [OUTPUT] [OPTIONS...]`, `--info` without
+- [x] `src/cli.ts` -> `dist/cli.js`, exposed as `jxltran-js`.
+- [x] Signature of the upstream tool: `jxltran-js INPUT [OUTPUT] [OPTIONS...]`, `--info` without
       OUTPUT, `-h/--help`.
-- [ ] Parsing strategy: TypeScript handles positional arguments and the help fast path, every flag is
-      forwarded verbatim to the parser inside the wasm module, so validation, defaults and error
-      messages match the native binary by construction.
-- [ ] File I/O through `node:fs`, errors to stderr with exit code 1, `--info` text to stdout.
-- [ ] `--version` intercepted in TypeScript (decided 2026-10-18, mirroring the `-version` handling in
+- [x] Parsing strategy: every flag is forwarded verbatim to the parser inside the wasm module, so
+      validation, defaults and error messages match the native binary by construction. TypeScript
+      only locates the positionals and the files named by value flags:
+      - a **probe run with empty input** first: the tool validates a whole command line before it
+        would open INPUT, and an empty input always stops at the known
+        `Input file is not a JPEG XL file.` check - so parse/validation errors and `-h/--help`
+        (including the required-INPUT usage path, exit 0) are forwarded in the native order
+        without touching any file, and only a run that reaches the signature check continues with
+        the real bytes,
+      - the value-flag arity table is derived from the tool's own `--help` text
+        (`--name=METAVAR` marks a value flag), so it cannot drift from the embedded flag surface,
+      - input sidecars (`--set-exif/-xmp/-jumbf`, `--set-splines-from`, `--append-jxl`) are staged
+        host -> MEMFS (missing files are left to the tool, which prints the native message),
+        `--extract-*` targets get their parent directory in MEMFS only when it exists on the host
+        and are copied back MEMFS -> host after a successful run, before OUTPUT is written,
+      - stream order on success mirrors the native tool: stderr, files, stdout last (the
+        `reversible_undo` line only appears after OUTPUT exists, so a write failure keeps stdout
+        as quiet as the native binary),
+      - an input that is a directory reads as an empty buffer, matching the native
+        `fread`-of-zero-bytes behaviour (`Input file is not a JPEG XL file.`, exit 1).
+- [x] File I/O through `node:fs`, errors to stderr with exit code 1, `--info` text to stdout.
+- [x] `--version` intercepted in TypeScript (decided 2026-10-18, mirroring the `-version` handling in
       `jpegtran-js`): prints `jxltran-js <package version> (jxltran ec2f8c2)` and exits 0. The
       upstream binary rejects `--version` — this is a deliberate, documented extension; every other
       flag is still forwarded verbatim.
+- Verification: `pnpm typecheck` green; `pnpm test` 15/15; a differential check against
+      `build/native/jxltran` with **32/32** identical outcomes (stdout, stderr, exit code and every
+      produced file byte-identical, argv[0] normalised): help/usage paths, `--info`,
+      `--info-structure`, transforms (orientation, crop, container, undo lines), missing input,
+      unknown flags with and without a missing input, help with a missing input, unwritable
+      OUTPUT, three positionals, `--` positionals, empty and directory inputs, XMP sidecar staging
+      in both flag forms, extract copy-back (present, absent, missing directory), a set->extract
+      chain, plus the documented `--version` deviation.
 
 ## Phase 5 — Tests (TODO 5)
 
