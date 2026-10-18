@@ -75,7 +75,9 @@ jobs:
           if npm view "${PKG_NAME}@${PKG_VERSION}" version >/dev/null 2>&1; then
             echo "${PKG_NAME}@${PKG_VERSION} already published, skipping npm publish"
           else
-            pnpm publish --no-git-checks --access public
+            # npm, not pnpm: `pnpm publish` returned a spurious 404 for a not yet existing
+            # scoped package, while `npm publish` published it fine with the same token.
+            npm publish --access public
           fi
 
       - name: Create GitHub release
