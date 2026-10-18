@@ -23,6 +23,7 @@
     "build.sh",
     "patches",
     "LICENSE",
+    "LICENSE.brotli",
     "README.md",
     "docs"
   ],

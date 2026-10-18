@@ -263,14 +263,24 @@ Decisions confirmed while writing this plan:
       line and exit 0 instead of failing (also when `dist/cli.js` is not built).
       `pnpm test` runs `test/simple.ts && test/cli.ts`.
 
-## Phase 6 — Docs and packaging
+## Phase 6 — Docs and packaging ✅ (2026-10-18)
 
-- [ ] `README.md` (build requirements: Emscripten, CMake, Ninja), `docs/api.md` along the lines of
-      `../jpegtran-js/docs/api.md`, `CHANGELOG.md` entries under `[Unreleased]`.
-- [ ] Ship upstream `LICENSE` (BSD-3-Clause) in `files`; `pnpm pack` sanity check.
-- [ ] Brotli is linked into the wasm module: ship its **Apache-2.0** license/attribution (README
-      credits + license file in `files`).
-- [ ] Optional: CI workflow with `emscripten-core/setup-emsdk` running build + tests.
+- [x] `README.md` (build requirements: git, CMake - Ninja when installed - and an existing
+      Emscripten; the script never installs anything itself), `docs/api.md` along the lines of
+      `../jpegtran-js/docs/api.md`, `CHANGELOG.md` entries under `[Unreleased]` (the stub heading
+      `[Unrealised]` was a typo and is gone).
+- [x] Ship upstream `LICENSE` (BSD-3-Clause) in `files`; `pnpm pack` sanity check: the tarball
+      contains `dist/` (`cli.js`, `index.js`, `index.d.ts`, `jxltran.mjs`, `jxltran.wasm` -
+      `cli.d.ts` excluded), `LICENSE`, `LICENSE.brotli`, `README.md`, `docs/api.md`, `build.sh`,
+      `patches/` and `src/jxltran_wrapper.cc`; no tests, no PLAN.md, no TypeScript sources.
+- [x] Brotli is linked into the wasm module: ship its license/attribution (README credits + license
+      file in `files`). Correction: the file in the pinned brotli v1.2.0 tree is the **MIT**
+      license, not Apache-2.0 as this plan first assumed - `LICENSE.brotli` reproduces it verbatim.
+- [x] CI workflow (marked optional here; included per decision 2026-10-18) with
+      `emscripten-core/setup-emsdk` running build + tests: pnpm 12, Node 24, Emscripten 6.0.9
+      (tag `6.0.9` = commit `4e42238`, exactly what this machine builds with) and system brotli
+      for the native reference. The djxl pixel section skips on the runner and runs where libjxl
+      is installed.
 
 ## Risks
 

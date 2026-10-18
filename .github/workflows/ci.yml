@@ -1,0 +1,49 @@
+# Builds the WebAssembly module and the native reference binary, then runs both test files.
+#
+# The tests compare the module against the native binary of the same sources, so the native build
+# is part of the run. The djxl pixel section of test/simple.ts skips on this runner (libjxl tools
+# are not installed here; the section runs on machines that have them) - both test files treat a
+# missing djxl as a skip, not a failure.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The same Emscripten release this package is developed with; setup-emsdk only installs
+      # into the runner's toolchain cache, it never touches a developer machine.
+      - name: Install Emscripten
+        uses: emscripten-core/setup-emsdk@v1
+        with:
+          version: 6.0.9
+
+      # The native reference links the system Brotli so its brob support matches the wasm build.
+      - name: Install system Brotli
+        run: sudo apt-get update && sudo apt-get install -y libbrotli-dev
+
+      - name: Build the WebAssembly module and the native reference
+        run: ./build.sh
+
+      - name: Build the JavaScript
+        run: pnpm run build:js
+
+      - name: Run the tests
+        run: pnpm test
