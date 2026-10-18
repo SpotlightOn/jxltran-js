@@ -28,12 +28,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # The same Emscripten release this package is developed with; setup-emsdk only installs
-      # into the runner's toolchain cache, it never touches a developer machine.
-      - name: Install Emscripten
-        uses: emscripten-core/setup-emsdk@v1
-        with:
-          version: 6.0.9
+      - name: Set up Emscripten
+        uses: emscripten-core/setup-emsdk@v16
 
       # The native reference links the system Brotli so its brob support matches the wasm build.
       - name: Install system Brotli
