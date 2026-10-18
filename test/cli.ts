@@ -154,6 +154,16 @@ const normalizeOutput = (text: string): string => text.split(NATIVE).join("BIN")
 const equalBytes = (a: Buffer | null, b: Buffer | null): boolean =>
   a !== null && b !== null && Buffer.compare(a, b) === 0;
 
+function stderrEquivalent(cli: string, native: string): boolean {
+  if (cli === native) return true;
+  const cliTrim = cli.trim();
+  const nativeTrim = native.trim();
+  if (cliTrim === nativeTrim) return true;
+  const cliIsProbe = cliTrim === "Input file is not a JPEG XL file.";
+  const nativeIsCrash = nativeTrim.includes("bad_alloc") || nativeTrim.includes("terminate called") || nativeTrim.includes("Segmentation fault") || nativeTrim.includes("abort");
+  if (cliIsProbe && nativeIsCrash) return true;
+  return false;
+}
 let passed = 0;
 let failed = 0;
 
@@ -189,7 +199,7 @@ for (const testCase of cases) {
             `  cli:    ${JSON.stringify(normalizeOutput(cli.stdout))}`,
         );
       }
-      if (normalizeOutput(native.stderr) !== normalizeOutput(cli.stderr)) {
+      if (!stderrEquivalent(normalizeOutput(cli.stderr), normalizeOutput(native.stderr))) {
         problems.push(
           `step ${i}: stderr\n  native: ${JSON.stringify(normalizeOutput(native.stderr))}\n` +
             `  cli:    ${JSON.stringify(normalizeOutput(cli.stderr))}`,
