@@ -1,0 +1,131 @@
+diff --git a/src/jxltran.cc b/src/jxltran.cc
+index 7d2cb8e..27dabe3 100644
+--- a/src/jxltran.cc
++++ b/src/jxltran.cc
+@@ -28,6 +28,7 @@
+ #include "codestream.h"
+ #include "frame_header.h"
+ #include "image_header.h"
++#include "jxltran_api.h"
+ #include "operations.h"
+ #include "photon_noise.h"
+ #include "reversible_undo.h"
+@@ -3341,7 +3342,13 @@ static void ReplaceCodestreamInBoxes(std::vector<jxltran::JxlBox>* boxes,
+   PatchFtypMinorVersion(boxes, 0);
+ }
+ 
+-int main(int argc, const char* argv[]) {
++// Runs one complete command line (see jxltran_api.h). |input_bytes| selects
++// between the two I/O modes: nullptr reads and writes the files named on the
++// command line, a buffer supplies INPUT and receives OUTPUT in memory.
++int jxltran::RunCommandLine(int argc, const char** argv,
++                            const std::vector<uint8_t>* input_bytes,
++                            std::vector<uint8_t>* out_result,
++                            std::string* undo_command) {
+   Args args;
+   jpegxl::tools::CommandLineParser cmdline;
+   args.AddCommandLineOptions(&cmdline);
+@@ -3548,7 +3555,11 @@ int main(int argc, const char* argv[]) {
+   jxltran::TraceInit(args.verbose ? stderr : nullptr);
+ 
+   std::vector<uint8_t> input;
+-  if (!ReadFile(args.file_in, &input)) return 1;
++  if (input_bytes != nullptr) {
++    input = *input_bytes;
++  } else if (!ReadFile(args.file_in, &input)) {
++    return 1;
++  }
+ 
+   bool is_container = jxltran::IsJxlContainer(input.data(), input.size());
+   const bool input_was_container = is_container;
+@@ -4374,13 +4385,14 @@ int main(int argc, const char* argv[]) {
+     }
+   }
+ 
+-  if (!WriteFile(args.file_out, output)) return 1;
++  if (input_bytes == nullptr && !WriteFile(args.file_out, output)) return 1;
+ 
+   if (args.file_out) {
+     std::string undo_line;
+     if (undo_rec.BuildUndoCommandLine(argv[0], args.file_out,
+                                       "INPUT_RESTORED.jxl", &undo_line)) {
+       PrintReversibleUndoLine(undo_line);
++      if (undo_command != nullptr) *undo_command = undo_line;
+     }
+     if (args.check_reversible) {
+       if (!undo_rec.box_pipeline_reversible() ||
+@@ -4413,5 +4425,17 @@ int main(int argc, const char* argv[]) {
+       }
+     }
+   }
++  if (input_bytes != nullptr && out_result != nullptr) {
++    *out_result = std::move(output);
++  }
+   return 0;
+ }
++
++#ifndef JXLTRAN_LIBRARY
++// The command line tool: with no input buffer, RunCommandLine reads INPUT and
++// writes OUTPUT itself. The WebAssembly build defines JXLTRAN_LIBRARY and has
++// no main() - it calls RunCommandLine directly (src/jxltran_wrapper.cc).
++int main(int argc, const char* argv[]) {
++  return jxltran::RunCommandLine(argc, argv, nullptr, nullptr, nullptr);
++}
++#endif  // JXLTRAN_LIBRARY
+diff --git a/src/jxltran_api.h b/src/jxltran_api.h
+new file mode 100644
+index 0000000..d409e54
+--- /dev/null
++++ b/src/jxltran_api.h
+@@ -0,0 +1,51 @@
++// Copyright (c) the JPEG XL Project Authors. All rights reserved.
++//
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++// Embedding interface of the jxltran pipeline.
++//
++// The whole command line tool, reduced to one function on memory buffers: the
++// caller passes a command line plus the INPUT file contents and gets the
++// OUTPUT file contents back. This is what the WebAssembly build of
++// jxltran-js links against - it has no main(). Files that flags refer to
++// (--set-exif FILE, --extract-*, --append-jxl, --set-splines-from) still go
++// through the regular file functions of the platform, so an embedder stages
++// them in the filesystem it provides (in WebAssembly: the virtual
++// filesystem).
++
++#ifndef TOOLS_JXLTRAN_API_H_
++#define TOOLS_JXLTRAN_API_H_
++
++#include <cstddef>
++#include <cstdint>
++#include <string>
++#include <vector>
++
++namespace jxltran {
++
++// Parses and validates the command line in |argv| and runs it: transforms
++// INPUT into OUTPUT and reports the result on stdout and stderr exactly like
++// the command line tool does. Returns 0 on success and 1 on failure; when it
++// fails, the diagnostic has already been written to stderr.
++//
++// |input_bytes| decides where INPUT and OUTPUT live:
++//
++//   nullptr  read the INPUT file and write the OUTPUT file named on the
++//            command line - what the command line tool does;
++//   buffer   take INPUT from the bytes and leave OUTPUT in |out_result|
++//            without touching any INPUT/OUTPUT file (files mentioned by
++//            other flags are still read and written).
++//
++// |out_result| and |undo_command| may be nullptr. In memory mode |out_result|
++// receives the OUTPUT bytes - empty for the read-only modes such as --info -
++// and |undo_command| the single-line command that inverts this run, when
++// there is one.
++int RunCommandLine(int argc, const char** argv,
++                   const std::vector<uint8_t>* input_bytes,
++                   std::vector<uint8_t>* out_result,
++                   std::string* undo_command);
++
++}  // namespace jxltran
++
++#endif  // TOOLS_JXLTRAN_API_H_
