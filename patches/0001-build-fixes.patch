@@ -1,0 +1,68 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 9aa52bf..148c7e0 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -92,24 +92,30 @@ endif()
+ # Rebuild web-demo/jxltran.js when sources change (same .cc tree as jxltran;
+ # requires emcc on PATH). Incremental: only reruns if a dependency is newer
+ # than web-demo/jxltran.js.
+-if(JXLTRAN_STANDALONE)
+-  find_program(JXLTRAN_EMCC NAMES emcc)
+-  if(JXLTRAN_EMCC)
+-    set(JXLTRAN_WEB_JS "${CMAKE_CURRENT_SOURCE_DIR}/web-demo/jxltran.js")
+-    add_custom_command(
+-      OUTPUT "${JXLTRAN_WEB_JS}"
+-      COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/web-demo/build.sh"
+-      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/web-demo"
+-      DEPENDS ${JXLTRAN_SOURCES}
+-              "${CMAKE_CURRENT_SOURCE_DIR}/web-demo/build.sh"
+-      COMMENT "Emscripten: web-demo/jxltran.js")
+-    add_custom_target(jxltran_wasm DEPENDS "${JXLTRAN_WEB_JS}")
+-    add_dependencies(jxltran jxltran_wasm)
+-    message(STATUS "jxltran: wasm web-demo tracks sources (emcc: ${JXLTRAN_EMCC})")
+-  else()
+-    message(
+-      STATUS
+-        "jxltran: emcc not found; skip web-demo auto-build (run web-demo/build.sh manually)"
+-    )
+-  endif()
+-endif()
++#
++# Disabled here because web-demo/ was never committed to this repository: no
++# commit in its history adds a file under web-demo/, so this hook makes the
++# build fail with "missing and no known rule to make 'web-demo/jxltran.js'"
++# whenever emcc is on PATH. The WebAssembly module is built by the wrapper
++# project's build.sh instead.
++#if(JXLTRAN_STANDALONE)
++#  find_program(JXLTRAN_EMCC NAMES emcc)
++#  if(JXLTRAN_EMCC)
++#    set(JXLTRAN_WEB_JS "${CMAKE_CURRENT_SOURCE_DIR}/web-demo/jxltran.js")
++#    add_custom_command(
++#      OUTPUT "${JXLTRAN_WEB_JS}"
++#      COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/web-demo/build.sh"
++#      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/web-demo"
++#      DEPENDS ${JXLTRAN_SOURCES}
++#              "${CMAKE_CURRENT_SOURCE_DIR}/web-demo/build.sh"
++#      COMMENT "Emscripten: web-demo/jxltran.js")
++#    add_custom_target(jxltran_wasm DEPENDS "${JXLTRAN_WEB_JS}")
++#    add_dependencies(jxltran jxltran_wasm)
++#    message(STATUS "jxltran: wasm web-demo tracks sources (emcc: ${JXLTRAN_EMCC})")
++#  else()
++#    message(
++#      STATUS
++#        "jxltran: emcc not found; skip web-demo auto-build (run web-demo/build.sh manually)"
++#    )
++#  endif()
++#endif()
+diff --git a/src/toc_layout.h b/src/toc_layout.h
+index feb0464..9c59510 100644
+--- a/src/toc_layout.h
++++ b/src/toc_layout.h
+@@ -10,6 +10,7 @@
+ #define TOOLS_JXLTRAN_TOC_LAYOUT_H_
+ 
+ #include <cstddef>
++#include <cstdint>
+ #include <cstdio>
+ #include <string>
+ #include <vector>
