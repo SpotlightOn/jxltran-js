@@ -1,5 +1,9 @@
 # jxltran-js
 
+[![npm version](https://img.shields.io/npm/v/@chimok/jxltran-js.svg)](https://www.npmjs.com/package/@chimok/jxltran-js)
+[![Release](https://github.com/SpotlightOn/jxltran-js/actions/workflows/release.yml/badge.svg)](https://github.com/SpotlightOn/jxltran-js/actions/workflows/release.yml)
+[![Socket](https://github.com/SpotlightOn/jxltran-js/actions/workflows/socket.yml/badge.svg)](https://github.com/SpotlightOn/jxltran-js/actions/workflows/socket.yml)
+
 Lossless JPEG XL transformations as a WebAssembly module, built from
 **[jxltran](https://github.com/libjxl/jxltran)** - the inspection and editing tool of the libjxl
 ecosystem - at a pinned commit, together with [Brotli](https://github.com/google/brotli) for the
@@ -23,10 +27,10 @@ upstream supports is available: orientation, crop, container remux, jxlp handlin
 metadata, ICC extraction, brob compression, frame selection. Every flag is forwarded to the same
 code the native binary runs, so parsing, defaults and error messages match by construction.
 
-**I will maintain and update this package, so don't worry because it's new. I use it for my app
-[meshviewer](https://github.com/SpotlightOn/meshviewer).**
+I will maintain and update this package, so don't worry because it's new. I use it for my app
+[meshviewer](https://github.com/SpotlightOn/meshviewer).
 
-> **Note:** This code is still young and mostly untested in the wild. Feedback is welcome.
+**Note:** This code (and upstream jxltran) is still young and work in progress. Feedback is welcome.
 
 ## Installation
 
@@ -106,7 +110,24 @@ const { data } = transformer.transform(bytes, { extraArgs: ["--brob=compress"] }
 ```
 
 Flags that name a file (`--set-exif FILE`, `--extract-*`, `--append-jxl`, `--set-splines-from`)
-work on the module's virtual filesystem, never on the host:
+take the **bytes** directly - there are no paths to invent and no filesystem to prepare, so the
+same code runs in Node and in a browser:
+
+```ts
+const withExif = transformer.transform(bytes, { exif: exifBytes, container: "yes" });
+const withXmp = transformer.transform(bytes, { xmp: xmpPacket, container: "yes" });
+const appended = transformer.transform(bytes, { appendJxl: otherJxl, container: "yes" });
+
+// `--extract-*` come back as bytes too; a box the image lacks fails like the native tool
+const { xmp } = transformer.extract(containerBytes, ["xmp"]);
+```
+
+`exif`, `xmp`, `jumbf` and `appendJxl` need container output (`container: "yes"` or
+`"if-needed"`), which is what the tool requires.
+
+The bytes are staged into the module's virtual filesystem for the run and removed again
+afterwards, so nothing is left behind and nothing is ever read from or written to the host. For a
+`run()` command line that names files of its own, the staging is still exposed by hand:
 
 ```ts
 transformer.fs.mkdirTree("/work");
@@ -144,8 +165,10 @@ pnpm test              # test/simple.ts + test/cli.ts
 pnpm run test:cli      # only the differential CLI battery
 ```
 
-- `test/simple.ts` (65 checks) covers the API, then compares `--info` and nine transformations
-  **byte for byte** against `build/native/jxltran` for every fixture, and finally decodes three
+- `test/simple.ts` (80 checks) covers the API - including the byte options and `extract()`, which
+  are checked to stage, run and clean up on their own - then compares `--info` and nine
+  transformations **byte for byte** against `build/native/jxltran` for every fixture, and finally
+  decodes three
   outputs with `djxl` and compares them as PPM: an orientation round trip and a container decode
   are byte-identical to the original, and the 90 degree file decodes as the original rotated 90
   degrees clockwise (djxl applies the Exif orientation itself).
@@ -160,9 +183,10 @@ line and the run stays green. The fixtures and their creation commands are docum
 
 ## Licence and provenance
 
-- **jxltran** (libjxl ecosystem) is BSD-3-Clause; its upstream `LICENSE` is reproduced verbatim in
-  [`LICENSE`](LICENSE), and this package is published under the same licence. The exact upstream
-  revision is fetched and verified by `build.sh`.
+- **jxltran-js** (this JavaScript/TypeScript wrapper) is BSD-3-Clause, see [`LICENSE`](LICENSE).
+- **jxltran** (upstream from libjxl) is BSD-3-Clause; its upstream licence is reproduced in
+  [`LICENSE.jxltran`](LICENSE.jxltran). The exact upstream revision is fetched and verified by
+  `build.sh`.
 - **Brotli** is MIT, reproduced in [`LICENSE.brotli`](LICENSE.brotli). Brotli is compiled into
   `dist/jxltran.wasm` so the `brob` box support works; the native reference binary links the
   system library instead.
