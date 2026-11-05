@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `package.json` declares `BSD-3-Clause AND MIT`: the WebAssembly module contains Brotli, which is
+  MIT.
+- The npm tarball now includes `LICENSE.jxltran`, so the upstream licence travels with the package
+  the README links to.
+
 ## [0.1.0] - 2026-10-18
 
 ### Added

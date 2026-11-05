@@ -2,7 +2,8 @@
   "name": "@chimok/jxltran-js",
   "version": "0.1.0",
   "description": "Lossless JPEG XL transformations (container remux, orientation, crop, metadata edits) as a WebAssembly module, built from libjxl's jxltran.",
-  "license": "BSD-3-Clause",
+  "author": "SpotlightOn (https://github.com/SpotlightOn)",
+  "license": "BSD-3-Clause AND MIT",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -24,6 +25,7 @@
     "patches",
     "LICENSE",
     "LICENSE.brotli",
+    "LICENSE.jxltran",
     "README.md",
     "docs"
   ],
@@ -65,7 +67,7 @@
     "typescript": "^7.0.2"
   },
   "engines": {
-    "node": ">=22.6"
+    "node": ">=22.18"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

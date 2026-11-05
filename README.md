@@ -1,8 +1,13 @@
 # jxltran-js
 
-[![npm version](https://img.shields.io/npm/v/@chimok/jxltran-js.svg)](https://www.npmjs.com/package/@chimok/jxltran-js)
-[![Release](https://github.com/SpotlightOn/jxltran-js/actions/workflows/release.yml/badge.svg)](https://github.com/SpotlightOn/jxltran-js/actions/workflows/release.yml)
-[![Socket](https://github.com/SpotlightOn/jxltran-js/actions/workflows/socket.yml/badge.svg)](https://github.com/SpotlightOn/jxltran-js/actions/workflows/socket.yml)
+[![npm version](https://img.shields.io/npm/v/@chimok/jxltran-js)](https://www.npmjs.com/package/@chimok/jxltran-js)
+[![npm downloads](https://img.shields.io/npm/dm/@chimok/jxltran-js)](https://www.npmjs.com/package/@chimok/jxltran-js)
+[![CI](https://github.com/SpotlightOn/jxltran-js/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/SpotlightOn/jxltran-js/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/SpotlightOn/jxltran-js/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/SpotlightOn/jxltran-js/actions/workflows/codeql.yml)
+[![Socket Badge](https://socket.dev/api/badge/npm/package/@chimok/jxltran-js)](https://socket.dev/npm/package/@chimok/jxltran-js)
+[![license](https://img.shields.io/npm/l/@chimok/jxltran-js)](./LICENSE)
+[![node](https://img.shields.io/node/v/@chimok/jxltran-js)](./package.json)
+[![WebAssembly](https://img.shields.io/badge/runtime-WebAssembly-654ff0)](https://webassembly.org/)
 
 Lossless JPEG XL transformations as a WebAssembly module, built from
 **[jxltran](https://github.com/libjxl/jxltran)** - the inspection and editing tool of the libjxl
@@ -38,7 +43,7 @@ I will maintain and update this package, so don't worry because it's new. I use 
 npm install @chimok/jxltran-js
 ```
 
-Requires Node.js 22.6 or newer.
+Requires Node.js 22.18 or newer.
 
 ## Layout
 
@@ -55,7 +60,7 @@ Requires Node.js 22.6 or newer.
 | `test/simple.ts`, `test/cli.ts` | API tests and the differential CLI tests |
 | `test/fixtures/` | the image corpus plus a README on how it was made |
 | `docs/api.md` | the API reference |
-| `LICENSE`, `LICENSE.brotli` | the BSD-3-Clause licence of jxltran, the MIT licence of Brotli |
+| `LICENSE`, `LICENSE.brotli`, `LICENSE.jxltran` | the BSD-3-Clause licences of this wrapper and jxltran, the MIT licence of Brotli |
 
 ## Build
 
@@ -89,7 +94,11 @@ What it does:
 ## Usage
 
 ```ts
+import { readFileSync } from "node:fs";
 import { createJxlTran, ORIENTATION } from "@chimok/jxltran-js";
+
+// the API works on bytes; where they come from is up to the caller
+const bytes = readFileSync("in.jxl");
 
 const transformer = await createJxlTran();
 transformer.version(); // "jxltran ec2f8c2"

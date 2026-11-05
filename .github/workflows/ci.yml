@@ -14,7 +14,7 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: pnpm/setup@v3
         with:
@@ -28,6 +28,9 @@ jobs:
       # The native reference links the system Brotli so its brob support matches the wasm build.
       - name: Install system Brotli
         run: sudo apt-get update && sudo apt-get install -y libbrotli-dev
+
+      - name: Typecheck
+        run: pnpm run typecheck
 
       - name: Build the WebAssembly module and the native reference
         run: ./build.sh
